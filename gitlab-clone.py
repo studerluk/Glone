@@ -3,6 +3,7 @@
 
 import os, sys
 import gitlab
+from git import Repo
 import shutil
 import argparse
 from pathlib import Path
@@ -12,49 +13,49 @@ from pathlib import Path
 def parseArgs():
 	parser = argparse.ArgumentParser(description = "Glone")
 
-	parser.add_argument('--outdir',   type=str, default='./',                   required=False)
-	parser.add_argument('--server',   type=str, default='github.com',           required=False)
+	parser.add_argument('--outdir',   help='Output directory for cloned repositories',
+		type=str, default='./',                   required=False)
+	parser.add_argument('--server',   help='Server ID configured in ~/.python-gitlab.cfg',
+		type=str, default='gitlab',               required=False)
 
-	parser.add_argument('--http',     action='store_true',                      required=False)
-	parser.add_argument('--ssh',      action='store_true',                      required=False)
+	parser.add_argument('--uri',      help='Whether to use SSH or HTTP',
+		choices=['http', 'ssh'],  default='ssh',  required=False)
 
-	parser.add_argument('--starred',  action='store_true',                      required=False)
+	parser.add_argument('--starred',  help='Only clone starred projects (can be combined with --owned)',
+		action='store_true',                      required=False)
+	parser.add_argument('--owned',    help='Only clone owned projects (can be combined with --starred)',
+		action='store_true',                      required=False)
 
-	parser.add_argument('--outfile',  type=str, default='tmp/gitlab-clone.sh',  required=False)
+	parser.add_argument('--groups',   help='Comma separated list of top level group names to clone',
+		type=str, default='',                     required=False)
+
 
 	args = parser.parse_args()
-
-	if args.http and args.ssh:
-		raise Exception('Use either https or ssh, not both...')
-
 	return args
+
 
 if '__name__' != '__main__':
 	args = parseArgs()
 
 	git = gitlab.Gitlab.from_config(args.server)
+	import pdb; pdb.set_trace()
 
-	mkdir_commands = []
-	for group in git.groups.list(all=True):
-		path = os.path.normpath(f"{args.outdir}/{group.attributes['full_path']}")
-
-		command = f"mkdir -p {path}"
-		mkdir_commands.append(command)
-
-	git_commands = []
-	for prj in git.projects.list(all=True):
-		repo_url = prj.attributes['ssh_url_to_repo']
-		if args.http:
-			repoUrl = prj.attributes['http_url_to_repo']
+	groups = args.groups.split(',')
 
 
-		path = os.path.normpath(f"{args.outdir}/{prj.attributes['path_with_namespace']}")
+	projects = git.projects.list(all=True, owned=args.owned, starred=args.starred)
+	if args.groups:
+		projects = [prj
+			for prj in projects
+				if any([prj.attributes['path_with_namespace'].startswith(g.strip()) for g in groups])
+		]
 
-		command = f"git clone {repo_url} {path}"
-		git_commands.append(command)
+	for prj in projects:
+		repo_url = prj.attributes[f"{args.uri}_url_to_repo"]
+		repo_path = os.path.normpath(f"{args.outdir}/{prj.attributes['path_with_namespace']}")
 
-	Path(os.path.dirname(args.outfile)).mkdir(parents=True, exist_ok=True)
-	with open(args.outfile, 'w') as f:
-		for command in mkdir_commands + git_commands:
-			f.write(command)
-			f.write('\n')
+		#print(f"mkdir -p {os.path.dirname(repo_path)}")
+		Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
+
+		print(f"git clone {repo_url} {repo_path}")
+		Repo.clone_from(repo_url, repo_path)
