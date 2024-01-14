@@ -2,6 +2,7 @@
 
 
 import os, sys
+import re
 import gitlab
 from git import Repo
 import shutil
@@ -13,20 +14,23 @@ from pathlib import Path
 def parseArgs():
 	parser = argparse.ArgumentParser(description = "Glone")
 
-	parser.add_argument('--outdir',   help='Output directory for cloned repositories',
+	parser.add_argument('--outdir',         help='Output directory for cloned repositories',
 		type=str, default='./',                   required=False)
-	parser.add_argument('--server',   help='Server ID configured in ~/.python-gitlab.cfg',
+	parser.add_argument('--server',         help='Server ID configured in ~/.python-gitlab.cfg',
 		type=str, default='gitlab',               required=False)
 
-	parser.add_argument('--uri',      help='Whether to use SSH or HTTP',
+	parser.add_argument('--uri',            help='Whether to use SSH or HTTP',
 		choices=['http', 'ssh'],  default='ssh',  required=False)
 
-	parser.add_argument('--starred',  help='Only clone starred projects (can be combined with --owned)',
+	parser.add_argument('--starred',        help='Only clone starred projects (can be combined with --owned)',
 		action='store_true',                      required=False)
-	parser.add_argument('--owned',    help='Only clone owned projects (can be combined with --starred)',
+	parser.add_argument('--owned',          help='Only clone owned projects (can be combined with --starred)',
 		action='store_true',                      required=False)
 
-	parser.add_argument('--groups',   help='Comma separated list of top level group names to clone',
+	parser.add_argument('--groups',         help='Comma separated list of top level group names to clone',
+		type=str, default='',                     required=False)
+
+	parser.add_argument('-e', '--exclude',  help='Exclude file containing RegEx patterns to exclude',
 		type=str, default='',                     required=False)
 
 
@@ -38,7 +42,6 @@ if '__name__' != '__main__':
 	args = parseArgs()
 
 	git = gitlab.Gitlab.from_config(args.server)
-	import pdb; pdb.set_trace()
 
 	groups = args.groups.split(',')
 
@@ -50,12 +53,34 @@ if '__name__' != '__main__':
 				if any([prj.attributes['path_with_namespace'].startswith(g.strip()) for g in groups])
 		]
 
+	if args.exclude:
+		with open(args.exclude, 'r') as file:
+			exclude_patterns = file.readlines()
+
+		exclude_patterns = [pattern.strip() for pattern in exclude_patterns]
+
+		if exclude_patterns:
+			projects = [prj
+				for prj in projects
+					if not any([re.match(rf"{pattern}", prj.attributes['name_with_namespace'].lower().replace(' ', '')) for pattern in exclude_patterns])
+			]
+
+	print("Will download following repositories")
+	for prj in projects:
+		print(prj.attributes['name_with_namespace'])
+
+	print("---------------------------------------------------------------")
 	for prj in projects:
 		repo_url = prj.attributes[f"{args.uri}_url_to_repo"]
 		repo_path = os.path.normpath(f"{args.outdir}/{prj.attributes['path_with_namespace']}")
 
 		#print(f"mkdir -p {os.path.dirname(repo_path)}")
-		Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
+		if os.path.exists(repo_path):
+			print(f"Fetching Repo {repo_path}")
+			repo = Repo(repo_path)
+			repo.git.fetch()
+		else:
+			Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
 
-		print(f"git clone {repo_url} {repo_path}")
-		Repo.clone_from(repo_url, repo_path)
+			print(f"git clone {repo_url} {repo_path}")
+			Repo.clone_from(repo_url, repo_path)
