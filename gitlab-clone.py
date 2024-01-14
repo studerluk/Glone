@@ -96,8 +96,7 @@ if '__name__' != '__main__':
 			repo.git.fetch()
 			print(" Done")
 		else:
-			Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
-
 			print(f"git clone {repo_url} {repo_path}...", end="")
+			Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
 			Repo.clone_from(repo_url, repo_path)
 			print(" Done")
