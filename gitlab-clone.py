@@ -91,11 +91,13 @@ if '__name__' != '__main__':
 
 		#print(f"mkdir -p {os.path.dirname(repo_path)}")
 		if os.path.exists(repo_path):
-			print(f"Fetching Repo {repo_path}")
+			print(f"Fetching Repo {repo_path}...", end="")
 			repo = Repo(repo_path)
 			repo.git.fetch()
+			print(" Done")
 		else:
 			Path(os.path.dirname(repo_path)).mkdir(parents=True, exist_ok=True)
 
-			print(f"git clone {repo_url} {repo_path}")
+			print(f"git clone {repo_url} {repo_path}...", end="")
 			Repo.clone_from(repo_url, repo_path)
+			print(" Done")
