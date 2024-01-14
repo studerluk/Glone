@@ -30,7 +30,10 @@ def parseArgs():
 	parser.add_argument('--groups',         help='Comma separated list of top level group names to clone',
 		type=str, default='',                     required=False)
 
-	parser.add_argument('-e', '--exclude',  help='Exclude file containing RegEx patterns to exclude',
+	parser.add_argument('-e', '--exclude',  help='Exclude file containing RegEx patterns to exclude (use lowercase, not compatible with include)',
+		type=str, default='',                     required=False)
+
+	parser.add_argument('-i', '--include',  help='Include file containing RegEx patterns to include (use lowercase, not compatible with exclude)',
 		type=str, default='',                     required=False)
 
 
@@ -53,7 +56,19 @@ if '__name__' != '__main__':
 				if any([prj.attributes['path_with_namespace'].startswith(g.strip()) for g in groups])
 		]
 
-	if args.exclude:
+	if args.include:
+		with open(args.include, 'r') as file:
+			include_patterns = file.readlines()
+
+		include_patterns = [pattern.strip() for pattern in include_patterns]
+
+		if include_patterns:
+			projects = [prj
+				for prj in projects
+					if any([re.match(rf"{pattern}", prj.attributes['name_with_namespace'].lower().replace(' ', '')) for pattern in include_patterns])
+			]
+
+	elif args.exclude:
 		with open(args.exclude, 'r') as file:
 			exclude_patterns = file.readlines()
 
