@@ -25,5 +25,5 @@ api_version = 4
 ```
 
 ```
-./gitlab-clone.py -f <config.yml>
+./glone.py -f <config.yml> [--prefix <prefix>]
 ```

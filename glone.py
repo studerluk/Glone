@@ -1,4 +1,4 @@
-#/usr!/usr/bin/python3
+#/usr/bin/python3
 
 
 import os, sys
@@ -10,43 +10,31 @@ import logging
 import shutil
 from pathlib import Path
 from copy import deepcopy
-from enum import Enum
 
 import gitlab
 from git import Repo
 
+from cerberus import Validator
+
 from pprint import pprint
+
+from glone.schema import schema, GitProtocol, RemoteType
+
 
 
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
 
-# Properties
-class RemoteType(Enum):
-	GITLAB = 'gitlab'
-	GITHUB = 'github'
-
-
-class RepoProtocol(Enum):
-	SSH = 'ssh'
-	HTTPS = 'https'
-
 
 class Group(object):
 	def __init__(self, group_config, default_config):
-		self.__dict__.update(default_config.get('groups', {}))
-		self.__dict__.update(**({'defaults': default_config.get('repos', {})}))
+		self.__dict__.update(default_config['groups'])
+		self.__dict__.update(**({'defaults': default_config['repos']}))
 		self.__dict__.update(**group_config)
-
-	def __str__(self):
-		return self.__dict__
 
 
 class GitRepo(object):
 	def __init__(self, config):
 		self.__dict__.update(**config)
-
-	def __str__(self):
-		return self.__dict__
 
 	#def run_tasks(self):
 	#	for taks in self.tasks:
@@ -57,9 +45,8 @@ class Remote(object):
 	def __init__(self, remote_config, default_config):
 		# Setup defaults
 		defaults = deepcopy(default_config)
-		if 'remotes' in defaults:
-			self.__dict__.update(**(defaults['remotes']))
-			del defaults['remotes']
+		self.__dict__.update(**(defaults['defaults']['remotes']))
+		del defaults['defaults']['remotes']
 		self.__dict__.update(**defaults)
 		self.__dict__.update(**remote_config)
 
@@ -146,13 +133,14 @@ class Remote(object):
 					git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
 
 				for repo in git_repos:
+					# TODO: this is overriding some configuration in the repo definition
 					repo_config = {
 						'id': repo.id,
 						'name': repo.name,
-						'source': repo.attributes[f"{group.defaults['protocol']}_url_to_repo"],
+						'source': repo.attributes[f"{group.protocol}_url_to_repo"],
 						'dest': repo.attributes['name_with_namespace'].replace(' ', ''),
 						'clone': True,
-						'tasks': ["fetch --prune"]
+						'tasks': group.defaults['tasks']
 					}
 					repo_config.update(**group.defaults)
 
@@ -171,10 +159,6 @@ class Remote(object):
 
 	def get_repo(self, repo):
 		pass
-
-
-	def __str__(self):
-		return self.__dict__
 
 
 # Arg parsing
@@ -234,7 +218,14 @@ if '__name__' != '__main__':
 	with open(args.file) as file:
 		config = yaml.safe_load(file)
 
-	# TODO: validate config schema
+	validator = Validator(schema)
+
+	if not validator.validate(config):
+		logging.error(f"Errors when validating config file '{args.file}'")
+		pprint(validator.errors)
+		sys.exit(1)
+
+	config = validator.normalized(config)
 
 	remotes = get_remotes(config)
 
