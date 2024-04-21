@@ -57,10 +57,6 @@ class GitRepo(object):
 		if 'name' not in repo_config:
 			self.name = self.id
 
-	#def run_tasks(self):
-	#	for taks in self.tasks:
-	#		logging.info(f"{task}")
-
 
 class Remote(object):
 	def __init__(self, remote_config, default_config):
