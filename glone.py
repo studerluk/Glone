@@ -239,14 +239,17 @@ def update_repos(repos, config, args):
 	for repo in repos:
 		repo_path = output_dir / repo.dest
 
-		if os.path.exists(repo_path):
-			logging.info(f"Fetching Repo {repo.name} in {repo_path}")
-			git_repo = Repo(repo_path)
-			git_repo.git.fetch()
-		else:
+		if not os.path.exists(repo_path):
 			logging.info(f"git clone {repo.source} {repo_path}")
 			Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
 			Repo.clone_from(repo.source, repo_path)
+
+		logging.info(f"Running tasks {repo.tasks} on {repo_path}")
+		git_repo = Repo(repo_path)
+		for task in repo.tasks:
+			if not task.startswith("git "):
+				task = f"git {task}"
+			git_repo.git.execute(task.split(" "))
 
 
 # Main
