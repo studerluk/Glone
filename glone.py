@@ -133,13 +133,17 @@ class Remote(object):
 					git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
 
 				for repo in git_repos:
-					# TODO: this is overriding some configuration in the repo definition
+					dest = Path(repo.attributes['name_with_namespace'].replace(' ', ''))
+
+					if group.dest:
+						dest = Path(group.dest) / Path(*(dest.parts[1:]))
+
 					repo_config = {
 						'id': repo.id,
 						'name': repo.name,
 						'source': repo.attributes[f"{group.protocol}_url_to_repo"],
-						'dest': repo.attributes['name_with_namespace'].replace(' ', ''),
-						'clone': True,
+						'dest': dest,
+						'clone': group.defaults['clone'],
 						'tasks': group.defaults['tasks']
 					}
 					repo_config.update(**group.defaults)
