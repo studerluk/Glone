@@ -18,7 +18,7 @@ from cerberus import Validator
 
 from pprint import pprint
 
-from glone.schema import schema, GitProtocol, RemoteType
+from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
 
 
 
@@ -27,14 +27,35 @@ logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO
 
 class Group(object):
 	def __init__(self, group_config, default_config):
+		norm_group = Validator(group_schema).normalized({})
+		self.__dict__.update(**norm_group)
+
 		self.__dict__.update(default_config['groups'])
 		self.__dict__.update(**({'defaults': default_config['repos']}))
+
+		for key, value in norm_group.items():
+			if key in group_config and group_config[key] == value:
+				del group_config[key]
+
 		self.__dict__.update(**group_config)
+
+		if 'name' not in group_config:
+			self.name = self.id
 
 
 class GitRepo(object):
-	def __init__(self, config):
-		self.__dict__.update(**config)
+	def __init__(self, repo_config):
+		norm_repo = Validator(repo_schema).normalized({})
+		self.__dict__.update(**norm_repo)
+
+		for key, value in norm_repo.items():
+			if key in repo_config and repo_config[key] != value:
+				del repo_config[key]
+
+		self.__dict__.update(**repo_config)
+
+		if 'name' not in repo_config:
+			self.name = self.id
 
 	#def run_tasks(self):
 	#	for taks in self.tasks:
@@ -43,12 +64,25 @@ class GitRepo(object):
 
 class Remote(object):
 	def __init__(self, remote_config, default_config):
-		# Setup defaults
+		norm_remote = Validator(remote_schema).normalized({})
+		self.__dict__.update(**norm_remote)
+
 		defaults = deepcopy(default_config)
 		self.__dict__.update(**(defaults['defaults']['remotes']))
 		del defaults['defaults']['remotes']
 		self.__dict__.update(**defaults)
+
+		if remote_config['defaults'] == {}:
+			del remote_config['defaults']
+
+		for key, value in norm_remote.items():
+			if key in remote_config and remote_config[key] != value:
+				del remote_config[key]
+
 		self.__dict__.update(**remote_config)
+
+		if 'name' not in remote_config:
+			self.name = self.id
 
 		# connect to remote server
 		if self.type == RemoteType.GITLAB.value:

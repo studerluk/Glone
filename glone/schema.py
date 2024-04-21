@@ -36,7 +36,7 @@ __groups_defaults = {
 
 __repos_defaults = {
 	'clone':     {'type': 'boolean', 'required': False},
-	'tasks':     {'type': 'list',    'required': False, 'schema': {'type': 'string'}, 'default': ["fetch"]},
+	'tasks':     {'type': 'list',    'required': False, 'schema': {'type': 'string'}},
 }
 
 __auth_schema = {
@@ -48,7 +48,7 @@ __auth_schema = {
 	'config':  {'type': 'string', 'required': False},
 }
 
-__group_schema = {
+group_schema = {
 	'id':       {'type': 'string', 'required': True},
 	'name':     {'type': 'string', 'required': False},
 	'source':   {'type': 'string', 'required': True},
@@ -63,7 +63,7 @@ __group_schema = {
 	}
 }
 
-__remote_schema = {
+remote_schema = {
 	'id':            {'type': 'string',  'required': True},
 	'name':          {'type': 'string',  'required': False},
 	'url':           {'type': 'string',  'required': False},
@@ -97,7 +97,7 @@ __remote_schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': __group_schema
+			'schema': group_schema
 		}
 	},
 	'users': {
@@ -106,12 +106,12 @@ __remote_schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': __group_schema
+			'schema': group_schema
 		}
 	}
 }
 
-__repo_schema = {
+repo_schema = {
 	'id':      {'type': 'string',  'required': True},
 	'name':    {'type': 'string',  'required': False},
 	'source':  {'type': 'string',  'required': True},
@@ -166,7 +166,7 @@ schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': __remote_schema
+			'schema': remote_schema
 		}
 	},
 
@@ -176,7 +176,7 @@ schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': __repo_schema
+			'schema': repo_schema
 		}
 	}
 }
