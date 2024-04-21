@@ -202,11 +202,11 @@ def update_repos(repos, config, args):
 		repo_path = output_dir / repo.dest
 
 		if os.path.exists(repo_path):
-			logging.info(f"Fetching Repo {repo.name} in {repo_path}...")
+			logging.info(f"Fetching Repo {repo.name} in {repo_path}")
 			git_repo = Repo(repo_path)
 			git_repo.git.fetch()
 		else:
-			logging.info(f"git clone {repo.source} {repo_path}...")
+			logging.info(f"git clone {repo.source} {repo_path}")
 			Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
 			Repo.clone_from(repo.source, repo_path)
 
