@@ -72,7 +72,7 @@ class Remote(object):
 			del remote_config['defaults']
 
 		for key, value in norm_remote.items():
-			if key in remote_config and remote_config[key] != value:
+			if key in remote_config and remote_config[key] == value:
 				del remote_config[key]
 
 		self.__dict__.update(**remote_config)
