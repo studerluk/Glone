@@ -53,11 +53,9 @@ class Remote(object):
 		self._git = self._connect()
 
 		# setup groups
-		groups = []
-		for group in self.groups:
-			groups.append(Group(group, self.defaults))
+		self.groups = [Group(group, self.defaults) for group in self.groups]
 
-		self.groups = groups
+		self.users = [Group(user, self.defaults) for user in self.users]
 
 
 	def _connect(self):
@@ -74,6 +72,22 @@ class Remote(object):
 class GitlabRemote(Remote):
 	def __init__(self, auth, emote_config, default_config):
 		super().__init__(auth, emote_config, default_config)
+
+		git_groups = self._git.groups.list(all=True, owned=self.discovery['owned_only'], starred=self.discovery['starred_only'])
+		git_groups = [g for g in git_groups if g.parent_id is None]
+		for pattern in self.discovery['excludes']:
+			git_groups = list(filter(lambda g: re.match(pattern, g.name), git_groups))
+
+		for group in git_groups:
+			group_config = Validator(group_schema).normalized({})
+			group_config['id']      = group.path
+			group_config['name']    = group.name
+			group_config['source']  = group.path
+			group_config['dest']    = group.name.replace(' ', '')
+
+			if not any([g.source == group_config['source'] for g in self.groups]):
+				self.groups.append(Group(group_config, self.defaults))
+				logging.info(f"Add group {group.name} by discovery")
 
 
 	def _connect(self):
@@ -110,21 +124,31 @@ class GitlabRemote(Remote):
 	def get_repos(self):
 		repos = []
 
-		git_groups = self._git.groups.list(all=True, owned=self.discovery['owned_only'], starred=self.discovery['starred_only'])
-		git_groups = [g for g in git_groups if g.parent_id is None]
-		for pattern in self.discovery['excludes']:
-			git_groups = list(filter(lambda g: re.match(pattern, g.name), git_groups))
+		for user in self.users:
+			logging.debug(f"Getting group {user.name}")
+			git_user = self._git.users.list(username=user.source)[0]
+			git_repos = git_user.projects.list(all=True)
 
-		for group in git_groups:
-			group_config = Validator(group_schema).normalized({})
-			group_config['id']      = group.path
-			group_config['name']    = group.name
-			group_config['source']  = group.path
-			group_config['dest']    = group.name.replace(' ', '')
+			for pattern in user.excludes:
+				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
 
-			if not any([g.source == group_config['source'] for g in self.groups]):
-				self.groups.append(Group(group_config, self.defaults))
-				logging.info(f"Add group {group.name} by discovery")
+			for repo in git_repos:
+				dest = Path(repo.attributes['name_with_namespace'].replace(' ', ''))
+
+				if user.dest:
+					dest = Path(user.dest) / Path(*(dest.parts[1:]))
+
+				repo_config = {
+					'id': repo.id,
+					'name': repo.name,
+					'source': repo.attributes[f"{user.protocol}_url_to_repo"],
+					'dest': dest,
+					'clone': user.defaults['clone'],
+					'tasks': user.defaults['tasks']
+				}
+				repo_config.update(**user.defaults)
+
+				repos.append(GitRepo(repo_config))
 
 		for group in self.groups:
 			logging.debug(f"Getting group {group.name}")
