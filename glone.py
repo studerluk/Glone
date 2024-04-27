@@ -19,202 +19,13 @@ from cerberus import Validator
 from pprint import pprint
 
 from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
+from glone.remote import GithubRemote, GitlabRemote
+from glone.group import Group
+from glone.repo import GitRepo
 
 
 
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
-
-
-class Group(object):
-	def __init__(self, group_config, default_config):
-		norm_group = Validator(group_schema).normalized({})
-		self.__dict__.update(**norm_group)
-
-		self.__dict__.update(default_config['groups'])
-		self.__dict__.update(**({'defaults': default_config['repos']}))
-
-		for key, value in norm_group.items():
-			if key in group_config and group_config[key] == value:
-				del group_config[key]
-
-		self.__dict__.update(**group_config)
-
-		if 'name' not in group_config:
-			self.name = self.id
-
-		if 'dest' not in group_config:
-			self.dest = self.id
-
-
-class GitRepo(object):
-	def __init__(self, repo_config):
-		norm_repo = Validator(repo_schema).normalized({})
-		self.__dict__.update(**norm_repo)
-
-		for key, value in norm_repo.items():
-			if key in repo_config and repo_config[key] != value:
-				del repo_config[key]
-
-		self.__dict__.update(**repo_config)
-
-		if 'name' not in repo_config:
-			self.name = self.id
-
-
-class Remote(object):
-	def __init__(self, remote_config, default_config):
-		norm_remote = Validator(remote_schema).normalized({})
-		self.__dict__.update(**norm_remote)
-
-		defaults = deepcopy(default_config)
-		self.__dict__.update(**(defaults['defaults']['remotes']))
-		del defaults['defaults']['remotes']
-		self.__dict__.update(**defaults)
-
-		if remote_config['defaults'] == {}:
-			del remote_config['defaults']
-
-		if remote_config['discovery'] == {}:
-			del remote_config['discovery']
-
-		for key, value in norm_remote.items():
-			if key in remote_config and remote_config[key] == value:
-				del remote_config[key]
-
-		self.__dict__.update(**remote_config)
-
-		if 'name' not in remote_config:
-			self.name = self.id
-
-		# connect to remote server
-		if self.type == RemoteType.GITLAB.value:
-			auth = self.__get_auth(self.auth)
-			if auth.get('server', None):
-				if auth.get('config', None):
-					try:
-						self.git = gitlab.Gitlab.from_config(auth['server'], [auth['config']])
-					except:
-						logging.error(f"Authentication with server '{auth['server']}' and config '{auth['config']}' failed")
-						sys.exit(1)
-				else:
-					try:
-						self.git = gitlab.Gitlab.from_config(auth['server'])
-					except:
-						logging.error(f"Authentication with server '{auth['server']}' failed")
-						sys.exit(1)
-
-			elif auth.get('token', None):
-				try:
-					self.git = gitlab.Gitlab.from_config(url=self.url, private_token=auth['token'])
-				except:
-					logging.error(f"Authentication with url '{self.url}' and token ailed")
-					sys.exit(1)
-
-			else:
-				logging.error("Unabel to authenticate")
-				sys.exit(1)
-
-		elif self.type == RemoteType.GITHUB.value:
-			logging.error("GitHub remotes are not yet supported")
-			sys.exit(1)
-
-		else:
-			logging.error(f"Unknown remote type: {self.type}")
-			sys.exit(1)
-
-		# setup groups
-		groups = []
-		for group in self.groups:
-			groups.append(Group(group, self.defaults))
-
-		self.groups = groups
-
-
-	def __get_config(self, remote_id):
-		remote = [r for r in config['remotes'] if r['id'] == remote_id]
-
-		if len(remote) > 1:
-			logging.error(f"Multiple remotes with id '{remote_id}' found")
-			sys.exit(1)
-		elif len(remote) == 0:
-			logging.error(f"No remote found with id '{remote_id}'")
-			sys.exit(1)
-
-		return remote[0]
-
-
-	def __get_auth(self, auth_id):
-		auth = [a for a in config['auth'] if a['id'] == auth_id]
-
-		if len(auth) > 1:
-			logging.error(f"Multiple auths with id '{auth_id}' found")
-			sys.exit(1)
-		elif len(auth) == 0:
-			logging.error(f"No auth found with id '{auth_id}'")
-			sys.exit(1)
-
-		return auth[0]
-
-
-	def get_repos(self):
-		repos = []
-
-		if self.type == RemoteType.GITLAB.value:
-			git_groups = self.git.groups.list(all=True, owned=self.discovery['owned_only'], starred=self.discovery['starred_only'])
-			git_groups = [g for g in git_groups if g.parent_id is None]
-			for pattern in self.discovery['excludes']:
-				git_groups = list(filter(lambda g: re.match(pattern, g.name), git_groups))
-
-			for group in git_groups:
-				group_config = Validator(group_schema).normalized({})
-				group_config['id']      = group.path
-				group_config['name']    = group.name
-				group_config['source']  = group.path
-				group_config['dest']    = group.name.replace(' ', '')
-
-				if not any([g.source == group_config['source'] for g in self.groups]):
-					self.groups.append(Group(group_config, self.defaults))
-					logging.info(f"Add group {group.name} by discovery")
-
-			for group in self.groups:
-				logging.debug(f"Getting group {group.name}")
-				git_group = self.git.groups.get(group.source)
-				git_repos = git_group.projects.list(all=True)
-
-				for pattern in group.excludes:
-					git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
-
-				for repo in git_repos:
-					dest = Path(repo.attributes['name_with_namespace'].replace(' ', ''))
-
-					if group.dest:
-						dest = Path(group.dest) / Path(*(dest.parts[1:]))
-
-					repo_config = {
-						'id': repo.id,
-						'name': repo.name,
-						'source': repo.attributes[f"{group.protocol}_url_to_repo"],
-						'dest': dest,
-						'clone': group.defaults['clone'],
-						'tasks': group.defaults['tasks']
-					}
-					repo_config.update(**group.defaults)
-
-					repos.append(GitRepo(repo_config))
-
-		elif self.type == RemoteType.GITHUB.value:
-			logging.error("GitHub remotes are not yet supported")
-			sys.exit(1)
-
-		else:
-			logging.error(f"Unknown remote type: {self.type}")
-			sys.exit(1)
-
-		return repos
-
-
-	def get_repo(self, repo):
-		pass
 
 
 # Arg parsing
@@ -231,12 +42,36 @@ def parseArgs():
 	return args
 
 
+def get_auth(config, auth_id):
+	auth = [a for a in config['auth'] if a['id'] == auth_id]
+
+	if len(auth) > 1:
+		logging.error(f"Multiple auths with id '{auth_id}' found")
+		sys.exit(1)
+
+	elif len(auth) == 0:
+		logging.error(f"No auth found with id '{auth_id}'")
+		sys.exit(1)
+
+	return auth[0]
+
+
 # Functions
 def get_remotes(config):
 	remotes = []
 
 	for remote in config['remotes']:
-		remotes.append(Remote(remote, {'defaults': config.get('defaults', {})}))
+		auth = get_auth(config, remote['auth'])
+
+		if remote['type'] == RemoteType.GITLAB.value:
+			remotes.append(GitlabRemote(auth, remote, {'defaults': config.get('defaults', {})}))
+
+		elif remote['type'] == RemoteType.GITHUB.value:
+			remotes.append(GithubRemote(auth, remote, {'defaults': config.get('defaults', {})}))
+
+		else:
+			logging.error(f"Unknown remote type '{config['type']}'")
+			sys.exit(1)
 
 	return remotes
 
