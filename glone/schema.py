@@ -23,10 +23,17 @@ class GitProtocol(Enum):
 
 # Schema definition
 __remote_defaults = {
-	'auth':          {'type': 'string',  'required': False},
-	'type':          {'type': 'string',  'required': False, 'allowed': RemoteType.values()},
-	'starred_only':  {'type': 'boolean', 'required': False},
-	'owned_only':    {'type': 'boolean', 'required': False},
+	'auth':      {'type': 'string',  'required': False},
+	'type':      {'type': 'string',  'required': False, 'allowed': RemoteType.values()},
+	'discovery': {
+		'type': 'dict',
+		'required': False,
+		'schema': {
+			'starred_only':  {'type': 'boolean', 'required': False},
+			'owned_only':    {'type': 'boolean', 'required': False},
+			'excludes':      {'type': 'list',    'required': False, 'schema': {'type': 'string'}, 'default': []},
+		},
+	},
 }
 
 __groups_defaults = {
@@ -64,14 +71,21 @@ group_schema = {
 }
 
 remote_schema = {
-	'id':            {'type': 'string',  'required': True},
-	'name':          {'type': 'string',  'required': False},
-	'url':           {'type': 'string',  'required': False},
-	'auth':          {'type': 'string',  'required': False},
-	'type':          {'type': 'string',  'required': True, 'allowed': RemoteType.values()},
-	'starred_only':  {'type': 'boolean', 'required': False},
-	'owned_only':    {'type': 'boolean', 'required': False},
-	'excludes':      {'type': 'list',    'required': False, 'schema': {'type': 'string'}, 'default': []},
+	'id':        {'type': 'string',  'required': True},
+	'name':      {'type': 'string',  'required': False},
+	'url':       {'type': 'string',  'required': False},
+	'auth':      {'type': 'string',  'required': False},
+	'type':      {'type': 'string',  'required': True, 'allowed': RemoteType.values()},
+	'discovery': {
+		'type': 'dict',
+		'required': False,
+		'schema': {
+			'starred_only':  {'type': 'boolean', 'required': False, 'default': False},
+			'owned_only':    {'type': 'boolean', 'required': False, 'default': False},
+			'excludes':      {'type': 'list',    'required': False, 'schema': {'type': 'string'}, 'default': []},
+		},
+		'default': {}
+	},
 	'defaults': {
 		'type': 'dict',
 		'required': False,
