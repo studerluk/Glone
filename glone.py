@@ -42,6 +42,9 @@ class Group(object):
 		if 'name' not in group_config:
 			self.name = self.id
 
+		if 'dest' not in group_config:
+			self.dest = self.id
+
 
 class GitRepo(object):
 	def __init__(self, repo_config):
