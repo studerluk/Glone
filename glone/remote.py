@@ -1,19 +1,16 @@
+#/usr/bin/python3
+
+
 import os, sys
 import re
-import argparse
-import yaml
 import logging
 
-import shutil
 from pathlib import Path
 from copy import deepcopy
 
 import gitlab
-from git import Repo
 
 from cerberus import Validator
-
-from pprint import pprint
 
 from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
 from glone.group import Group

@@ -2,6 +2,7 @@
 
 from enum import Enum
 
+
 # Enums
 class RemoteType(Enum):
 	GITLAB = 'gitlab'

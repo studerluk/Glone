@@ -2,16 +2,12 @@
 
 
 import os, sys
-import re
 import argparse
 import yaml
 import logging
 
-import shutil
 from pathlib import Path
-from copy import deepcopy
 
-import gitlab
 from git import Repo
 
 from cerberus import Validator
