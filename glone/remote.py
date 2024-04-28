@@ -12,7 +12,7 @@ import gitlab
 
 from cerberus import Validator
 
-from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
+from glone import schema
 from glone.group import Group
 from glone.repo import GitRepo
 
@@ -24,7 +24,7 @@ class Remote(object):
 	def __init__(self, auth, remote_config, default_config):
 		self._auth = auth
 
-		norm_remote = Validator(remote_schema).normalized({})
+		norm_remote = Validator(schema.remote).normalized({})
 		self.__dict__.update(**norm_remote)
 
 		defaults = deepcopy(default_config)
@@ -76,7 +76,7 @@ class GitlabRemote(Remote):
 			git_groups = list(filter(lambda g: re.match(pattern, g.name), git_groups))
 
 		for group in git_groups:
-			group_config = Validator(group_schema).normalized({})
+			group_config = Validator(schema.group).normalized({})
 			group_config['id']      = group.path
 			group_config['name']    = group.name
 			group_config['source']  = group.path

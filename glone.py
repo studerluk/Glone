@@ -14,7 +14,7 @@ from cerberus import Validator
 
 from pprint import pprint
 
-from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
+from glone import schema
 from glone.remote import GithubRemote, GitlabRemote
 from glone.group import Group
 from glone.repo import GitRepo
@@ -59,10 +59,10 @@ def get_remotes(config):
 	for remote in config['remotes']:
 		auth = get_auth(config, remote['auth'])
 
-		if remote['type'] == RemoteType.GITLAB.value:
+		if remote['type'] == schema.RemoteType.GITLAB.value:
 			remotes.append(GitlabRemote(auth, remote, {'defaults': config.get('defaults', {})}))
 
-		elif remote['type'] == RemoteType.GITHUB.value:
+		elif remote['type'] == schema.RemoteType.GITHUB.value:
 			remotes.append(GithubRemote(auth, remote, {'defaults': config.get('defaults', {})}))
 
 		else:
@@ -108,7 +108,7 @@ if '__name__' != '__main__':
 	with open(args.file) as file:
 		config = yaml.safe_load(file)
 
-	validator = Validator(schema)
+	validator = Validator(schema.config)
 
 	if not validator.validate(config):
 		logging.error(f"Errors when validating config file '{args.file}'")

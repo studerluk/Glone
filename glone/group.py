@@ -7,7 +7,7 @@ import logging
 
 from cerberus import Validator
 
-from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
+from glone import schema
 
 
 
@@ -16,7 +16,7 @@ logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO
 
 class Group(object):
 	def __init__(self, group_config, default_config):
-		norm_group = Validator(group_schema).normalized({})
+		norm_group = Validator(schema.group).normalized({})
 		self.__dict__.update(**norm_group)
 
 		self.__dict__.update(default_config['groups'])

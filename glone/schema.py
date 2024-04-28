@@ -56,7 +56,7 @@ __auth_schema = {
 	'config':  {'type': 'string', 'required': False},
 }
 
-group_schema = {
+group = {
 	'id':       {'type': 'string', 'required': True},
 	'name':     {'type': 'string', 'required': False},
 	'source':   {'type': 'string', 'required': True},
@@ -71,7 +71,7 @@ group_schema = {
 	}
 }
 
-remote_schema = {
+remote = {
 	'id':        {'type': 'string',  'required': True},
 	'name':      {'type': 'string',  'required': False},
 	'url':       {'type': 'string',  'required': False},
@@ -112,7 +112,7 @@ remote_schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': group_schema
+			'schema': group
 		}
 	},
 	'users': {
@@ -121,12 +121,12 @@ remote_schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': group_schema
+			'schema': group
 		}
 	}
 }
 
-repo_schema = {
+repo = {
 	'id':      {'type': 'string',  'required': True},
 	'name':    {'type': 'string',  'required': False},
 	'source':  {'type': 'string',  'required': True},
@@ -137,7 +137,7 @@ repo_schema = {
 
 
 # This is the complete schema
-schema = {
+config = {
 	'defaults': {
 		'type': 'dict',
 		'required': False,
@@ -181,7 +181,7 @@ schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': remote_schema
+			'schema': remote
 		}
 	},
 
@@ -191,7 +191,7 @@ schema = {
 		'schema': {
 			'type': 'dict',
 			'required': False,
-			'schema': repo_schema
+			'schema': repo
 		}
 	}
 }

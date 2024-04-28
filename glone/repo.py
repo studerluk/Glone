@@ -7,7 +7,7 @@ import logging
 
 from cerberus import Validator
 
-from glone.schema import schema, repo_schema, group_schema, remote_schema, GitProtocol, RemoteType
+from glone import schema
 
 
 
@@ -16,7 +16,7 @@ logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO
 
 class GitRepo(object):
 	def __init__(self, repo_config):
-		norm_repo = Validator(repo_schema).normalized({})
+		norm_repo = Validator(schema.repo).normalized({})
 		self.__dict__.update(**norm_repo)
 
 		for key, value in norm_repo.items():
