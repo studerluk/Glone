@@ -28,13 +28,14 @@ logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO
 def parseArgs():
 	parser = argparse.ArgumentParser(description = "Mass manage git repositories across multiple remotes")
 
-	parser.add_argument('-f', '--file',     help='Root directory for git repositories',
-		type=str, default='repos.yml',            required=False)
+	parser.add_argument('-f', '--file',     help='Config file containing repo list',
+		type=str, default='config.yml',  required=False)
 
-	parser.add_argument('--prefix',         help='Root directory for git repositories',
-		type=str, default='./',                   required=False)
+	parser.add_argument('--prefix',         help='Root directory for git repositories to be cloned into',
+		type=str, default='./',          required=False)
 
 	args = parser.parse_args()
+
 	return args
 
 
