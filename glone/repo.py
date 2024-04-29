@@ -14,7 +14,7 @@ from glone import schema
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
 
 
-class GitRepo(object):
+class GloneRepo(object):
 	def __init__(self, repo_config):
 		norm_repo = Validator(schema.repo).normalized({})
 		self.__dict__.update(**norm_repo)

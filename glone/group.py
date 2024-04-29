@@ -14,7 +14,7 @@ from glone import schema
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
 
 
-class Group(object):
+class GloneGroup(object):
 	def __init__(self, group_config, default_config):
 		norm_group = Validator(schema.group).normalized({})
 		self.__dict__.update(**norm_group)

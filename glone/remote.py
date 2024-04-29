@@ -13,14 +13,14 @@ import gitlab
 from cerberus import Validator
 
 from glone import schema
-from glone.group import Group
-from glone.repo import GitRepo
+from glone.group import GloneGroup
+from glone.repo import GloneRepo
 
 
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
 
 
-class Remote(object):
+class GloneRemote(object):
 	def __init__(self, auth, remote_config, default_config):
 		self._auth = auth
 
@@ -50,9 +50,9 @@ class Remote(object):
 		self._git = self._connect()
 
 		# setup groups
-		self.groups = [Group(group, self.defaults) for group in self.groups]
+		self.groups = [GloneGroup(group, self.defaults) for group in self.groups]
 
-		self.users = [Group(user, self.defaults) for user in self.users]
+		self.users = [GloneGroup(user, self.defaults) for user in self.users]
 
 
 	def _connect(self):
@@ -66,7 +66,7 @@ class Remote(object):
 		pass
 
 
-class GitlabRemote(Remote):
+class GitlabRemote(GloneRemote):
 	def __init__(self, auth, emote_config, default_config):
 		super().__init__(auth, emote_config, default_config)
 
@@ -145,7 +145,7 @@ class GitlabRemote(Remote):
 				}
 				repo_config.update(**user.defaults)
 
-				repos.append(GitRepo(repo_config))
+				repos.append(GloneRepo(repo_config))
 
 		for group in self.groups:
 			logging.debug(f"Getting group {group.name}")
@@ -171,12 +171,12 @@ class GitlabRemote(Remote):
 				}
 				repo_config.update(**group.defaults)
 
-				repos.append(GitRepo(repo_config))
+				repos.append(GloneRepo(repo_config))
 
 		return repos
 
 
-class GithubRemote(Remote):
+class GithubRemote(GloneRemote):
 	def __init__(self, auth, emote_config, default_config):
 		super().__init__(auth, emote_config, default_config)
 

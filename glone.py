@@ -15,9 +15,9 @@ from cerberus import Validator
 from pprint import pprint
 
 from glone import schema
-from glone.remote import GithubRemote, GitlabRemote
-from glone.group import Group
-from glone.repo import GitRepo
+from glone import GithubRemote, GitlabRemote
+from glone import GloneGroup
+from glone import GloneRepo
 
 
 
@@ -76,7 +76,7 @@ def get_repos(config):
 	repos = []
 
 	for repo in config.get('repos', []):
-		repos.append(GitRepo(repo))
+		repos.append(GloneRepo(repo))
 
 	return repos
 
