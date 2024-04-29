@@ -27,7 +27,10 @@ __remote_defaults = {
 	'auth':      {'type': 'string',  'required': False},
 	'type':      {'type': 'string',  'required': False, 'allowed': RemoteType.values()},
 	'discovery': {
-		'type': 'dict',
+		'oneof': [
+			{'type': 'dict'},
+			{'type': 'boolean'}
+		],
 		'required': False,
 		'schema': {
 			'starred_only':  {'type': 'boolean', 'required': False},
@@ -78,14 +81,17 @@ remote = {
 	'auth':      {'type': 'string',  'required': False},
 	'type':      {'type': 'string',  'required': True, 'allowed': RemoteType.values()},
 	'discovery': {
-		'type': 'dict',
+		'oneof': [
+			{'type': 'dict'},
+			{'type': 'boolean'}
+		],
 		'required': False,
 		'schema': {
-			'starred_only':  {'type': 'boolean', 'required': False, 'default': False},
-			'owned_only':    {'type': 'boolean', 'required': False, 'default': False},
+			'starred_only':  {'type': 'boolean', 'required': False,},
+			'owned_only':    {'type': 'boolean', 'required': False,},
 			'excludes':      {'type': 'list',    'required': False, 'schema': {'type': 'string'}, 'default': []},
 		},
-		'default': {}
+		'default': False
 	},
 	'defaults': {
 		'type': 'dict',
