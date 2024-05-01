@@ -46,7 +46,7 @@ release:
     - apt install -y curl
 
   script:
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $BINARY "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/Glone/${CI_COMMIT_TAG}/glone_${CI_COMMIT_TAG}"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$BINARY" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/Glone/${CI_COMMIT_REF_NAME}/glone_${CI_COMMIT_REF_NAME}"'
 
   only:
     - web
