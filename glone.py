@@ -13,6 +13,7 @@ from git import Repo
 from cerberus import Validator
 
 from pprint import pprint
+from tabulate import tabulate
 
 from glone import schema
 from glone import GithubRemote, GitlabRemote
@@ -36,6 +37,24 @@ def parseArgs():
 
 	parser.add_argument('--prefix',         help='Root directory for git repositories to be cloned into',
 		type=str, default=DEFAULT_GLONE_PREFIX,  required=False)
+
+	subparsers = parser.add_subparsers(dest='command', help='')
+
+	parser_diff = subparsers.add_parser('diff', help='Show diff between local and remote')
+	parser_diff.set_defaults(func=diff_repos)
+
+	parser_update = subparsers.add_parser('update', help='Update local or remote state')
+	update_group = parser_update.add_mutually_exclusive_group(required=False)
+	update_group.add_argument('--local',   action='store_true',  help='Update local state from remote')
+	update_group.add_argument('--remote',  action='store_true',  help='Update remote state from local')
+	parser_update.set_defaults(func=update_repos)
+
+	parser_list = subparsers.add_parser('list', help='List known repos')
+	list_group = parser_list.add_mutually_exclusive_group(required=False)
+	list_group.add_argument('--local',    action='store_true',  help='List local repos')
+	list_group.add_argument('--remote',   action='store_true',  help='List remote repos')
+	parser_list.add_argument('--format',  type=str,  default='github', help='Output format (supports \'tabulate\' formats)')
+	parser_list.set_defaults(func=list_repos)
 
 	args = parser.parse_args()
 
@@ -89,20 +108,62 @@ def update_repos(repos, config, args):
 	output_dir = Path(args.prefix)
 	output_dir.mkdir(parents=True, exist_ok=True)
 
-	for repo in repos:
-		repo_path = output_dir / repo.dest
+	if args.remote:
+		pass
 
-		if not os.path.exists(repo_path):
-			logging.info(f"git clone {repo.source} {repo_path}")
-			Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
-			Repo.clone_from(repo.source, repo_path)
+	else: # local (default)
+		for repo in repos:
+			repo_path = output_dir / repo.dest
 
-		logging.info(f"Running tasks {repo.tasks} on {repo_path}")
-		git_repo = Repo(repo_path)
-		for task in repo.tasks:
-			if not task.startswith("git "):
-				task = f"git {task}"
-			git_repo.git.execute(task.split(" "))
+			if not os.path.exists(repo_path):
+				logging.info(f"git clone {repo.source} {repo_path}")
+				Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
+				Repo.clone_from(repo.source, repo_path)
+
+			logging.info(f"Running tasks {repo.tasks} on {repo_path}")
+			git_repo = Repo(repo_path)
+			for task in repo.tasks:
+				if not task.startswith("git "):
+					task = f"git {task}"
+				git_repo.git.execute(task.split(" "))
+
+
+def diff_repos(repos, config, args):
+	pass
+
+
+def list_repos(repos, config, args):
+	data = []
+
+	if args.local:
+		start_path = Path(args.prefix)
+		git_dirs = [str(p) for p in start_path.rglob('.git') if p.is_dir()]
+
+		header = ["Name", "Path", "Remote"]
+		data = [header]
+
+		#import pdb; pdb.set_trace()
+		for git_dir in git_dirs:
+			row = [
+				Path(git_dir).parent.name,
+				Path(git_dir).parent,
+				[f"{remote.name}: {remote.url}" for remote in Repo(git_dir).remotes]
+			]
+			data.append(row)
+
+	else: # remote (default)
+		header = ["Name", "Source", "Dest"]
+
+		data = [header]
+		for repo in repos:
+			row = [
+				repo.name,
+				repo.source,
+				repo.dest
+			]
+			data.append(row)
+
+	print(tabulate(data, headers="firstrow", tablefmt=args.format))
 
 
 # Main
@@ -129,4 +190,7 @@ if '__name__' != '__main__':
 
 	repos += get_repos(config)
 
-	update_repos(repos, config, args)
+	if args.command:
+		args.func(repos, config, args)
+	else:
+		logging.error("No or unkown subcommand... Use --help for more info on usage")
