@@ -33,3 +33,7 @@ class GloneGroup(object):
 
 		if 'dest' not in group_config:
 			self.dest = self.id
+
+
+	def __str__(self):
+		return f"{self.__dict__}"

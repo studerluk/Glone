@@ -27,3 +27,7 @@ class GloneRepo(object):
 
 		if 'name' not in repo_config:
 			self.name = self.id
+
+
+	def __str__(self):
+		return f"{self.__dict__}"

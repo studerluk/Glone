@@ -66,6 +66,10 @@ class GloneRemote(object):
 		pass
 
 
+	def __str__(self):
+		return f"{self.__dict__}"
+
+
 class GitlabRemote(GloneRemote):
 	def __init__(self, auth, emote_config, default_config):
 		super().__init__(auth, emote_config, default_config)
