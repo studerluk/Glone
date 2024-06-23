@@ -23,16 +23,19 @@ from glone import GloneRepo
 
 logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
 
+DEFAULT_GLONE_FILE    = 'glone.yml'
+DEFAULT_GLONE_PREFIX  = './repos'
+
 
 # Arg parsing
 def parseArgs():
 	parser = argparse.ArgumentParser(description = "Mass manage git repositories across multiple remotes")
 
 	parser.add_argument('-f', '--file',     help='Config file containing repo list',
-		type=str, default='config.yml',  required=False)
+		type=str, default=DEFAULT_GLONE_FILE,    required=False)
 
 	parser.add_argument('--prefix',         help='Root directory for git repositories to be cloned into',
-		type=str, default='./',          required=False)
+		type=str, default=DEFAULT_GLONE_PREFIX,  required=False)
 
 	args = parser.parse_args()
 

@@ -1,7 +1,7 @@
 ### Custom ###
 
 tmp/
-config.yml
+glone.yml
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/osx,vim,venv,emacs,linux,macos,python,windows,visualstudiocode
