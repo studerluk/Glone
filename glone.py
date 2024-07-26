@@ -145,17 +145,31 @@ def diff_repos(repos, config, args):
 	header = ["Name", "Remote", "Local Dest", "Config Dest"]
 	data = [header]
 
-	for git_dir in local_only:
-		remotes = [remote.url for remote in Repo(git_dir).remotes]
-		for repo in repos:
-			if repo.source in remotes and (Path(args.prefix) / repo.dest != Path(git_dir).parent):
-				row = [
-					repo.name,
-					repo.source,
-					Path(git_dir).parent,
-					Path(args.prefix) / repo.dest
-				]
-				data.append(row)
+	for repo in repos:
+		found = False
+		for git_dir in local_only:
+			remotes = [remote.url for remote in Repo(git_dir).remotes]
+			if repo.source in remotes:
+				if (Path(args.prefix) / repo.dest != Path(git_dir).parent):
+					row = [
+						repo.name,
+						repo.source,
+						Path(git_dir).parent,
+						Path(args.prefix) / repo.dest
+					]
+					data.append(row)
+			else:
+				found = True
+
+		if not found:
+			row = [
+				repo.name,
+				repo.source,
+				"-",
+				Path(args.prefix) / repo.dest
+			]
+			data.append(row)
+
 
 	print("# Repos with unexpected location")
 	print("")
