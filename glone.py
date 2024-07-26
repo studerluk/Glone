@@ -41,6 +41,7 @@ def parseArgs():
 	subparsers = parser.add_subparsers(dest='command', help='')
 
 	parser_diff = subparsers.add_parser('diff', help='Show diff between local and remote')
+	parser_diff.add_argument('--format',  type=str,  default='github', help='Output format (supports \'tabulate\' formats)')
 	parser_diff.set_defaults(func=diff_repos)
 
 	parser_update = subparsers.add_parser('update', help='Update local or remote state')
@@ -135,7 +136,67 @@ def update_repos(repos, config, args):
 
 
 def diff_repos(repos, config, args):
-	pass
+	git_dirs = get_local_repos(args.prefix)
+	local_only = [git_dir for git_dir in git_dirs]
+
+
+	# Both but different paths
+	data = []
+	header = ["Name", "Remote", "Local Dest", "Config Dest"]
+	data = [header]
+
+	for git_dir in local_only:
+		remotes = [remote.url for remote in Repo(git_dir).remotes]
+		for repo in repos:
+			if repo.source in remotes and (Path(args.prefix) / repo.dest != Path(git_dir).parent):
+				row = [
+					repo.name,
+					repo.source,
+					Path(git_dir).parent,
+					Path(args.prefix) / repo.dest
+				]
+				data.append(row)
+
+	print("# Repos with unexpected location")
+	print("")
+	print(tabulate(data, headers="firstrow", tablefmt=args.format))
+	print("\n")
+
+
+	# Git status
+	data = []
+	header = ["Name", "Path", "Status", "Branches"]
+	data = [header]
+
+	for git_dir in local_only:
+		repo = Repo(git_dir)
+		diffs = repo.git.status('--porcelain').split('\n')
+		branches = repo.branches
+		active_branch = repo.active_branch
+
+		branch_list = []
+		for branch in branches:
+			pref = '*' if branch.name == active_branch.name else "-"
+			tracking_branch = branch.tracking_branch()
+			if tracking_branch:
+				branch_diff = repo.git.rev_list('--left-right', '--count', f'{tracking_branch.name}...{branch.name}').split()
+				branch_list.append(f"{pref} {branch.name} [{tracking_branch.name} v{branch_diff[0]} / ^{branch_diff[1]}]")
+			else:
+				branch_list.append(f"{pref} {branch.name} []")
+
+		for i in range(max(len(diffs), len(branch_list), 1)):
+			row = [
+				Path(git_dir).parent.name if i == 0 else "",
+				Path(git_dir).parent if i == 0 else "",
+				diffs[i] if i < len(diffs) else "",
+				branch_list[i] if i < len(branch_list) else ""
+			]
+			data.append(row)
+
+	print("# Repos status")
+	print("")
+	print(tabulate(data, headers="firstrow", tablefmt=args.format))
+	print("\n")
 
 
 def list_repos(repos, config, args):
