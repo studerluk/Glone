@@ -104,6 +104,12 @@ def get_repos(config):
 	return repos
 
 
+def get_local_repos(prefix):
+	start_path = Path(prefix)
+	git_dirs = [str(p) for p in start_path.rglob('.git') if p.is_dir()]
+	return git_dirs
+
+
 def update_repos(repos, config, args):
 	output_dir = Path(args.prefix)
 	output_dir.mkdir(parents=True, exist_ok=True)
@@ -136,8 +142,7 @@ def list_repos(repos, config, args):
 	data = []
 
 	if args.local:
-		start_path = Path(args.prefix)
-		git_dirs = [str(p) for p in start_path.rglob('.git') if p.is_dir()]
+		git_dirs = get_local_repos(args.prefix)
 
 		header = ["Name", "Path", "Remote"]
 		data = [header]
@@ -159,11 +164,12 @@ def list_repos(repos, config, args):
 			row = [
 				repo.name,
 				repo.source,
-				repo.dest
+				Path(args.prefix) / repo.dest
 			]
 			data.append(row)
 
 	print(tabulate(data, headers="firstrow", tablefmt=args.format))
+	print("")
 
 
 # Main
