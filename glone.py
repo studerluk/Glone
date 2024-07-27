@@ -226,7 +226,6 @@ def list_repos(repos, config, args):
 		header = ["Name", "Path", "Remote"]
 		data = [header]
 
-		#import pdb; pdb.set_trace()
 		for git_dir in git_dirs:
 			row = [
 				Path(git_dir).parent.name,
