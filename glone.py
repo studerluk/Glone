@@ -42,9 +42,9 @@ def parseArgs():
 
 	parser_diff = subparsers.add_parser('diff', help='Show diff between local and remote')
 	parser_diff.add_argument('--format',  type=str,  default='github', help='Output format (supports \'tabulate\' formats)')
-	parser_diff.add_argument('--git',  action='store_true', help='Show diff of git repo (git status --porcelain)')
-	parser_diff.add_argument('--path',  action='store_true', help='Show diff of repo location')
-	parser_diff.add_argument('--all',  action='store_true', help='Show all diff options')
+	parser_diff.add_argument('--git',     action='store_true',         help='Show diff of git repo (git status --porcelain)')
+	parser_diff.add_argument('--path',    action='store_true',         help='Show diff of repo location')
+	parser_diff.add_argument('--all',     action='store_true',         help='Show all diff options')
 	parser_diff.set_defaults(func=diff_repos)
 
 	parser_update = subparsers.add_parser('update', help='Update local or remote state')
@@ -55,9 +55,9 @@ def parseArgs():
 
 	parser_list = subparsers.add_parser('list', help='List known repos')
 	list_group = parser_list.add_mutually_exclusive_group(required=False)
-	list_group.add_argument('--local',    action='store_true',  help='List local repos')
-	list_group.add_argument('--remote',   action='store_true',  help='List remote repos')
-	parser_list.add_argument('--format',  type=str,  default='github', help='Output format (supports \'tabulate\' formats)')
+	list_group.add_argument('--local',    action='store_true',          help='List local repos')
+	list_group.add_argument('--remote',   action='store_true',          help='List remote repos')
+	parser_list.add_argument('--format',  type=str,  default='github',  help='Output format (supports \'tabulate\' formats)')
 	parser_list.set_defaults(func=list_repos)
 
 	args = parser.parse_args()
