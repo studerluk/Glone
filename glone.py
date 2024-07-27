@@ -154,6 +154,7 @@ def diff_repos(repos, config, args):
 			for git_dir in local_only:
 				remotes = [remote.url for remote in Repo(git_dir).remotes]
 				if repo.source in remotes:
+					found = True
 					if (Path(args.prefix) / repo.dest != Path(git_dir).parent):
 						row = [
 							repo.name,
@@ -162,8 +163,6 @@ def diff_repos(repos, config, args):
 							Path(args.prefix) / repo.dest
 						]
 						data.append(row)
-				else:
-					found = True
 
 			if not found:
 				row = [
