@@ -173,6 +173,22 @@ def diff_repos(repos, config, args):
 				]
 				data.append(row)
 
+		for git_dir in local_only:
+			remotes = [remote.url for remote in Repo(git_dir).remotes]
+			found = False
+			for repo in repos:
+				if repo.source in remotes:
+					found = True
+
+			if not found:
+				row = [
+					Path(git_dir).parent.name,
+					remotes[0] if len(remotes) > 0 else "-",
+					Path(git_dir).parent,
+					"-"
+				]
+				data.append(row)
+
 
 		print("# Repos with unexpected location")
 		print("")
