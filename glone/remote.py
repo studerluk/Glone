@@ -155,7 +155,7 @@ class GitlabRemote(GloneRemote):
 		for group in self.groups:
 			logging.debug(f"Getting group {group.name}")
 			git_group = self._git.groups.get(group.source)
-			git_repos = git_group.projects.list(all=True)
+			git_repos = git_group.projects.list(all=True, include_subgroups=True)
 
 			for pattern in group.excludes:
 				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
