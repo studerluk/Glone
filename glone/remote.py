@@ -135,7 +135,7 @@ class GitlabRemote(GloneRemote):
 				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
 
 			for repo in git_repos:
-				dest = Path(repo.attributes['name_with_namespace'].replace(' ', ''))
+				dest = Path(repo.attributes['path_with_namespace'])
 
 				if user.dest:
 					dest = Path(user.dest) / Path(*(dest.parts[1:]))
@@ -161,7 +161,7 @@ class GitlabRemote(GloneRemote):
 				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
 
 			for repo in git_repos:
-				dest = Path(repo.attributes['name_with_namespace'].replace(' ', ''))
+				dest = Path(repo.attributes['path_with_namespace'])
 
 				if group.dest:
 					dest = Path(group.dest) / Path(*(dest.parts[1:]))
