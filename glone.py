@@ -142,6 +142,8 @@ def diff_repos(repos, config, args):
 	git_dirs = get_local_repos(args.prefix)
 	local_only = [git_dir for git_dir in git_dirs]
 
+	git_dirs = list(sorted(git_dirs, key=lambda d: Path(d).parent.name))
+	repos = list(sorted(repos, key=lambda r: r.name))
 
 	if args.path or args.all:
 		# Both but different paths
@@ -188,7 +190,6 @@ def diff_repos(repos, config, args):
 					"-"
 				]
 				data.append(row)
-
 
 		print("# Repos with unexpected location")
 		print("")
@@ -239,6 +240,8 @@ def list_repos(repos, config, args):
 	if args.local:
 		git_dirs = get_local_repos(args.prefix)
 
+		git_dirs = list(sorted(git_dirs, key=lambda d: Path(d).parent.name))
+
 		header = ["Name", "Path", "Remote"]
 		data = [header]
 
@@ -252,6 +255,8 @@ def list_repos(repos, config, args):
 
 	else: # remote (default)
 		header = ["Name", "Source", "Dest"]
+
+		repos = list(sorted(repos, key=lambda r: r.name))
 
 		data = [header]
 		for repo in repos:
