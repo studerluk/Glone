@@ -148,7 +148,7 @@ def diff_repos(repos, config, args):
 	if args.path or args.all:
 		# Both but different paths
 		data = []
-		header = ["Name", "Remote", "Local Dest", "Config Dest"]
+		header = ["Name", "Remote", "Local Path", "Config Dest"]
 		data = [header]
 
 		for repo in repos:
@@ -254,7 +254,7 @@ def list_repos(repos, config, args):
 			data.append(row)
 
 	else: # remote (default)
-		header = ["Name", "Source", "Dest"]
+		header = ["Name", "Remote", "Dest"]
 
 		repos = list(sorted(repos, key=lambda r: r.name))
 
