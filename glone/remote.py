@@ -77,8 +77,9 @@ class GitlabRemote(GloneRemote):
 		if self.discovery != {} and self.discovery != False:
 			git_groups = self._git.groups.list(all=True, owned=self.discovery['owned_only'], starred=self.discovery['starred_only'])
 			git_groups = [g for g in git_groups if g.parent_id is None]
+
 			for pattern in self.discovery['excludes']:
-				git_groups = list(filter(lambda g: re.match(pattern, g.name), git_groups))
+				git_groups = list(filter(lambda g: not re.match(pattern, g.name), git_groups))
 
 			for group in git_groups:
 				group_config = Validator(schema.group).normalized({})
@@ -132,7 +133,7 @@ class GitlabRemote(GloneRemote):
 			git_repos = git_user.projects.list(all=True)
 
 			for pattern in user.excludes:
-				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
+				git_repos = list(filter(lambda r: not re.match(pattern, r.name), git_repos))
 
 			for repo in git_repos:
 				dest = Path(repo.attributes['path_with_namespace'])
@@ -158,7 +159,7 @@ class GitlabRemote(GloneRemote):
 			git_repos = git_group.projects.list(all=True, include_subgroups=True)
 
 			for pattern in group.excludes:
-				git_repos = list(filter(lambda r: re.match(pattern, r.name), git_repos))
+				git_repos = list(filter(lambda r: not re.match(pattern, r.name), git_repos))
 
 			for repo in git_repos:
 				dest = Path(repo.attributes['path_with_namespace'])
