@@ -45,6 +45,7 @@ def parseArgs():
 	parser_diff.add_argument('--git',     action='store_true',         help='Show diff of git repo (git status --porcelain)')
 	parser_diff.add_argument('--path',    action='store_true',         help='Show diff of repo location')
 	parser_diff.add_argument('--all',     action='store_true',         help='Show all diff options')
+	parser_diff.add_argument('--max',     type=int,  default=10,       help='Max lines for git status (-1 = unlimited)')
 	parser_diff.set_defaults(func=diff_repos)
 
 	parser_update = subparsers.add_parser('update', help='Update local or remote state')
@@ -206,6 +207,8 @@ def diff_repos(repos, config, args):
 		for git_dir in local_only:
 			repo = Repo(git_dir)
 			diffs = repo.git.status('--porcelain').split('\n')
+			if len(diffs) > args.max:
+				diffs = diffs[:args.max] + ["..."]
 			branches = repo.branches
 			active_branch = repo.active_branch
 
