@@ -11,7 +11,7 @@ from glone import schema
 
 
 
-logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)-10s ->\t%(message)s', level=logging.INFO)
 
 
 class GloneGroup(object):

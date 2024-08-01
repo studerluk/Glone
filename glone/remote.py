@@ -17,7 +17,7 @@ from glone.group import GloneGroup
 from glone.repo import GloneRepo
 
 
-logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)-10s ->\t%(message)s', level=logging.INFO)
 
 
 class GloneRemote(object):

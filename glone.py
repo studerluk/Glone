@@ -22,7 +22,7 @@ from glone import GloneRepo
 
 
 
-logging.basicConfig(format='%(levelname)-10s -> %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)-10s ->\t%(message)s', level=logging.INFO)
 
 DEFAULT_GLONE_FILE    = 'glone.yml'
 DEFAULT_GLONE_PREFIX  = './repos'
