@@ -50,8 +50,9 @@ def parseArgs():
 
 	parser_update = subparsers.add_parser('update', help='Update local or remote state')
 	update_group = parser_update.add_mutually_exclusive_group(required=False)
-	update_group.add_argument('--local',   action='store_true',  help='Update local state from remote')
-	update_group.add_argument('--remote',  action='store_true',  help='Update remote state from local')
+	update_group.add_argument('--local',    action='store_true',  help='Update local state from remote')
+	update_group.add_argument('--remote',   action='store_true',  help='Update remote state from local')
+	update_group.add_argument('--dry-run',  action='store_true',  help='Only perform a dry run of the update, no actual changes')
 	parser_update.set_defaults(func=update_repos)
 
 	parser_list = subparsers.add_parser('list', help='List known repos')
@@ -123,20 +124,36 @@ def update_repos(repos, config, args):
 		pass
 
 	else: # local (default)
-		for repo in repos:
-			repo_path = output_dir / repo.dest
+		if args.dry_run: # Only do dry run
+			for repo in repos:
+				repo_path = output_dir / repo.dest
 
-			if not os.path.exists(repo_path):
-				logging.info(f"git clone {repo.source} {repo_path}")
-				Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
-				Repo.clone_from(repo.source, repo_path)
+				logging.info(f"Update {repo.name} in {repo_path}")
 
-			logging.info(f"Running tasks {repo.tasks} on {repo_path}")
-			git_repo = Repo(repo_path)
-			for task in repo.tasks:
-				if not task.startswith("git "):
-					task = f"git {task}"
-				git_repo.git.execute(task.split(" "))
+				if not os.path.exists(repo_path):
+					logging.info(f"\tgit clone {repo.source} {repo_path}")
+
+				for task in repo.tasks:
+					if not task.startswith("git "):
+						task = f"git {task}"
+					logging.info(f"\t{task}")
+		else: # Do the changes
+			for repo in repos:
+				repo_path = output_dir / repo.dest
+
+				logging.info(f"Update {repo.name} in {repo_path}")
+
+				if not os.path.exists(repo_path):
+					logging.info(f"\tgit clone {repo.source} {repo_path}")
+					Path(repo_path.parent).mkdir(parents=True, exist_ok=True)
+					Repo.clone_from(repo.source, repo_path)
+
+				git_repo = Repo(repo_path)
+				for task in repo.tasks:
+					if not task.startswith("git "):
+						task = f"git {task}"
+					logging.info(f"\t{task}")
+					git_repo.git.execute(task.split(" "))
 
 
 def diff_repos(repos, config, args):
